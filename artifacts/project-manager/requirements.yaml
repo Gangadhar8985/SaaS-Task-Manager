@@ -1,0 +1,16 @@
+packages:
+  "date-fns": "For formatting due dates and creation times in human-readable formats"
+  "recharts": "For rendering project progress and task status charts on the dashboard"
+  "framer-motion": "For smooth layout animations, modal entries, and interactive card hovering"
+  "clsx": "For conditional tailwind class merging"
+  "tailwind-merge": "For safe tailwind class merging in UI components"
+  "lucide-react": "For beautiful consistent iconography"
+
+images:
+  - path: "artifacts/project-manager/public/images/logo.png"
+    description: "Minimalist, geometric logo mark for a modern B2B SaaS project management tool. Interlocking abstract shapes in vibrant indigo and teal, transparent background, highly polished and professional."
+    aspect_ratio: "1:1"
+
+notes:
+  - "Importing generated TanStack Query hooks from @workspace/api-client-react"
+  - "Using wouter for routing without nested anchor tags"

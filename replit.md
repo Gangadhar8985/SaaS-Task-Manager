@@ -12,28 +12,63 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **Validation**: Zod, `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Build**: esbuild (ESM bundle)
+- **Frontend**: React + Vite + Tailwind CSS + shadcn/ui
+
+## Application: Project Manager
+
+A full-stack project management web app for B2B SaaS teams.
+
+### Features
+- Dashboard with stats (total projects, tasks by status, progress charts)
+- Projects: create, view, edit, delete. Progress bars, status badges
+- Project detail: task board with To Do / In Progress / Done columns
+- Tasks: all-tasks view with filters, priority/status badges, due dates
+- Team: member list with initials/role, add/remove team members
+- Sidebar navigation
+
+### Routes (Frontend)
+- `/` — Dashboard
+- `/projects` — Projects list
+- `/projects/:id` — Project detail + task board
+- `/tasks` — All tasks
+- `/team` — Team members
+
+### API Endpoints
+- `GET/POST /api/projects`
+- `GET/PUT/DELETE /api/projects/:id`
+- `GET /api/projects/:id/tasks`
+- `GET/POST /api/tasks`
+- `GET/PUT/DELETE /api/tasks/:id`
+- `GET/POST /api/members`
+- `DELETE /api/members/:id`
 
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── project-manager/    # React + Vite frontend
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+│   └── src/seed.ts         # Database seed script
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
+
+## Database Schema (lib/db/src/schema/)
+- `projects.ts` — projects table (id, name, description, status, color, timestamps)
+- `members.ts` — team members table (id, name, email, role, initials, createdAt)
+- `tasks.ts` — tasks table (id, title, description, status, priority, projectId, assigneeId, dueDate, timestamps)
 
 ## TypeScript & Composite Projects
 
@@ -56,11 +91,18 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
+- Routes: `src/routes/index.ts` mounts sub-routers
+- Depends on: `@workspace/db`, `@workspace/api-zod`, `zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+
+### `artifacts/project-manager` (`@workspace/project-manager`)
+
+React + Vite frontend for the project management app.
+
+- Uses generated React Query hooks from `@workspace/api-client-react`
+- Pages in `src/pages/`
+- Layout in `src/components/AppLayout.tsx`
+- Hooks in `src/hooks/`
 
 ### `lib/db` (`@workspace/db`)
 
@@ -68,7 +110,6 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 - `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
 - `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
 - Exports: `.` (pool, db, schema), `./schema` (schema only)
 
@@ -85,12 +126,14 @@ Run codegen: `pnpm --filter @workspace/api-spec run codegen`
 
 ### `lib/api-zod` (`@workspace/api-zod`)
 
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from the OpenAPI spec. Used by `api-server` for response validation.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client from the OpenAPI spec.
 
 ### `scripts` (`@workspace/scripts`)
 
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts package.
+
+- `pnpm --filter @workspace/scripts run seed` — seed the database with sample data
