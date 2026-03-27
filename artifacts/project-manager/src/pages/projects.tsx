@@ -26,7 +26,7 @@ export function Projects() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Projects</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900">Project</h1>
           <p className="text-slate-500 mt-2">Manage and track all your team's initiatives.</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
